@@ -2,8 +2,8 @@
 @use 'mixins' as *;
 
 .btn-primary {
-  background-color: var(--primary-dark);
-  color: white;
+  background-color: var(--accent-color);
+  color: var(--btn-text-color);
   padding: $spacing-unit * 3 $spacing-unit * 6;
   border-radius: $border-radius;
   font-weight: 600;
@@ -29,7 +29,7 @@
     font-weight: 500;
   }
   
-  input {
+  input, textarea {
     width: 100%;
     padding: $spacing-unit * 3;
     border: 1px solid #ddd;
@@ -39,7 +39,7 @@
     
     &:focus {
       outline: none;
-      border-color: var(--primary-dark);
+      border-color: var(--accent-color);
       box-shadow: 0 0 0 2px rgba($primary-dark, 0.1);
     }
     

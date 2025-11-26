@@ -16,16 +16,14 @@
   .auth-title {
     text-align: center;
     margin-bottom: $spacing-unit * 2;
-    color: var(--primary-dark);
+    color: var(--accent-color);
   }
   
   .auth-subtitle {
     text-align: center;
     margin-bottom: $spacing-unit * 6;
-    color: #666;
-    [data-theme='dark'] & {
-      color: #aaa;
-    }
+    color: var(--text-color);
+    opacity: 0.8;
   }
   
   .auth-footer {
@@ -34,7 +32,7 @@
     font-size: 0.875rem;
     
     a {
-      color: var(--primary-dark);
+      color: var(--accent-color);
       text-decoration: none;
       font-weight: 600;
       

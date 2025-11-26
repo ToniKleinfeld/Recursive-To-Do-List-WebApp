@@ -20,7 +20,7 @@
     gap: $spacing-unit * 2;
     font-weight: 700;
     font-size: 1.25rem;
-    color: var(--primary-dark);
+    color: var(--accent-color);
   }
 
   .actions {
@@ -120,13 +120,30 @@
     }
   }
 
-  .filter-toggle {
+  .filter-toggle-btn {
     display: flex;
     align-items: center;
     gap: $spacing-unit * 2;
     cursor: pointer;
     font-size: 0.875rem;
     white-space: nowrap;
+    padding: $spacing-unit * 2.5 $spacing-unit * 4;
+    border: 1px solid #ddd;
+    border-radius: $border-radius;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: all $transition-speed $transition-ease;
+
+    &:hover {
+      border-color: var(--accent-color);
+      opacity: 0.9;
+    }
+
+    &.active {
+      background-color: $success;
+      border-color: $success;
+      color: white;
+    }
   }
 }
 

@@ -15,12 +15,16 @@
   --bg-color: #{$bg-light};
   --text-color: #{$text-light};
   --card-bg: #{$card-bg-light};
+  --accent-color: #{$primary-dark};
+  --btn-text-color: #ffffff;
 }
 
 [data-theme='dark'] {
   --bg-color: #{$bg-dark};
   --text-color: #{$text-dark};
   --card-bg: #{$card-bg-dark};
+  --accent-color: #{$primary-light};
+  --btn-text-color: #{$primary-dark};
 }
 
 body {
