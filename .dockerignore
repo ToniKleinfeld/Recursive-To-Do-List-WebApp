@@ -2,3 +2,32 @@
 build
 node_modules
 README.md
+
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.example
+
+# Tests
+vitest.config.ts
+**/*.test.ts
+**/*.test.tsx
+coverage
+
+# Docker
+docker-compose.yml
+docker-compose.prod.yml
+
+# IDE
+.vscode
+.idea
+
+# Scripts
+scripts
+
+# Appwrite
+appwrite
+appwrite.config.json
