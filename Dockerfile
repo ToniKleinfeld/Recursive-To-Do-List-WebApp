@@ -12,6 +12,10 @@ FROM node:20-alpine AS build-env
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app
+ARG VITE_APPWRITE_ENDPOINT
+ARG VITE_APPWRITE_PROJECT_ID
+ENV VITE_APPWRITE_ENDPOINT=$VITE_APPWRITE_ENDPOINT
+ENV VITE_APPWRITE_PROJECT_ID=$VITE_APPWRITE_PROJECT_ID
 RUN npm run build
 
 FROM node:20-alpine

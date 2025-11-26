@@ -1,40 +1,67 @@
 services:
-  traefik:
-    image: traefik:v3.0
-    container_name: traefik
-    command:
-      - "--configFile=/etc/traefik/traefik.yml"
+  # ---- Reverse Proxy + Let's Encrypt ----
+  reverse-proxy:
+    image: nginxproxy/nginx-proxy:1.8
+    container_name: reverse-proxy
+    restart: always
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./acme.json:/acme.json
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
       - web
-    restart: unless-stopped
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: acme-companion
+    restart: always
+    depends_on:
+      - reverse-proxy
+    environment:
+      DEFAULT_EMAIL: ${EMAIL_ADMIN}
+      NGINX_PROXY_CONTAINER: reverse-proxy
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
 
   webapp:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_APPWRITE_ENDPOINT: ${VITE_APPWRITE_ENDPOINT}
+        VITE_APPWRITE_PROJECT_ID: ${VITE_APPWRITE_PROJECT_ID}
     container_name: recursive-todo-app
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.webapp.rule=Host(`localhost`)" # Change to your domain
-      - "traefik.http.routers.webapp.entrypoints=websecure"
-      - "traefik.http.routers.webapp.tls.certresolver=myresolver"
-      - "traefik.http.services.webapp.loadbalancer.server.port=3000"
+    expose:
+      - "3000"
     environment:
       - VITE_APPWRITE_ENDPOINT=${VITE_APPWRITE_ENDPOINT}
       - VITE_APPWRITE_PROJECT_ID=${VITE_APPWRITE_PROJECT_ID}
-      - DEV_KEY=${DEV_KEY}
+      - ADMIN_KEY=${ADMIN_KEY}
       - SESSION_SECRET=${SESSION_SECRET}
       - NODE_ENV=production
+      - PORT=3000
+      # Nginx Proxy Config
+      - VIRTUAL_HOST=${DOMAIN}
+      - VIRTUAL_PORT=3000
+      - LETSENCRYPT_HOST=${DOMAIN}
+      - LETSENCRYPT_EMAIL=${EMAIL_ADMIN}
     networks:
       - web
 
 networks:
   web:
     driver: bridge
+
+volumes:
+  certs:
+  vhost:
+  html:
