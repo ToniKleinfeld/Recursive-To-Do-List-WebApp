@@ -6,6 +6,12 @@ export const PROJECT_ID = process.env.VITE_APPWRITE_PROJECT_ID!;
 export const API_KEY = process.env.DEV_KEY!; // Using DEV_KEY as API Key
 
 export function createAdminClient() {
+  if (!API_KEY) {
+    console.error("❌ API_KEY is missing in createAdminClient!");
+  } else {
+    console.log("✅ API_KEY loaded. Length:", API_KEY.length);
+  }
+
   const client = new Client()
     .setEndpoint(ENDPOINT)
     .setProject(PROJECT_ID)

@@ -1,11 +1,22 @@
-import { redirect } from "react-router";
-import { destroySession } from "~/services/session.server";
-import type { Route } from "./+types/logout";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
+import { account } from "~/services/appwrite";
 
-export async function action({ request }: Route.ActionArgs) {
-  return destroySession(request);
-}
+export default function Logout() {
+  const navigate = useNavigate();
 
-export async function loader() {
-  return redirect("/login");
+  useEffect(() => {
+    const logout = async () => {
+      try {
+        await account.deleteSession("current");
+      } catch (error) {
+        console.error("Logout failed", error);
+      } finally {
+        navigate("/login");
+      }
+    };
+    logout();
+  }, [navigate]);
+
+  return <div className="p-8 text-center">Logging out...</div>;
 }

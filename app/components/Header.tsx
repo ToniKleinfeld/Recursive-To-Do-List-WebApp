@@ -1,4 +1,4 @@
-import { Form } from "react-router";
+import { Link } from "react-router";
 import { Moon, Sun, LogOut, CheckSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getTheme, setTheme } from "~/utils/theme";
@@ -25,15 +25,13 @@ export function Header({ user }: { user: any }) {
         <span>Recursive To-Do</span>
       </div>
       <div className="actions">
-        <span className="user-name">{user.name}</span>
+        <span className="user-name">{user?.name}</span>
         <button onClick={toggleTheme} className="icon-btn" aria-label="Toggle Theme">
           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
         </button>
-        <Form action="/logout" method="post" style={{ display: 'inline' }}>
-          <button type="submit" className="icon-btn" aria-label="Logout">
-            <LogOut size={20} />
-          </button>
-        </Form>
+        <Link to="/logout" className="icon-btn" aria-label="Logout">
+          <LogOut size={20} />
+        </Link>
       </div>
     </header>
   );

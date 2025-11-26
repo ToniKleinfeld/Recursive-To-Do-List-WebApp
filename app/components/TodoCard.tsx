@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Check, Trash2, Plus, Edit2, X, Save } from "lucide-react";
-import { useFetcher } from "react-router";
 import type { TodoCard as TodoCardType, Subtask } from "~/types/card";
 import { MAX_SUBTASK_DEPTH } from "~/constants";
 import clsx from "clsx";
@@ -10,13 +9,16 @@ interface TodoCardProps {
   rootId: string;
   depth: number;
   isRoot?: boolean;
+  onToggle: (rootId: string, targetId: string, isCompleted: boolean) => void;
+  onDelete: (rootId: string, targetId: string) => void;
+  onEdit: (rootId: string, targetId: string, title: string, description: string) => void;
+  onAddSubtask: (rootId: string, parentId: string, title: string) => void;
 }
 
-export function TodoCard({ card, rootId, depth, isRoot = false }: TodoCardProps) {
+export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDelete, onEdit, onAddSubtask }: TodoCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
-  const fetcher = useFetcher();
 
   const id = isRoot ? (card as TodoCardType).$id : (card as Subtask).id;
   const isCompleted = card.isCompleted;
@@ -27,41 +29,29 @@ export function TodoCard({ card, rootId, depth, isRoot = false }: TodoCardProps)
   const progress = totalCount > 0 ? `${completedCount}/${totalCount}` : "";
 
   const handleToggle = () => {
-    fetcher.submit(
-      { 
-        intent: "toggle", 
-        rootId, 
-        targetId: id,
-        isCompleted: (!isCompleted).toString() 
-      },
-      { method: "post" }
-    );
+    onToggle(rootId, id, !isCompleted);
   };
 
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this task?")) {
-      fetcher.submit(
-        { 
-          intent: "delete", 
-          rootId, 
-          targetId: id 
-        },
-        { method: "post" }
-      );
+      onDelete(rootId, id);
     }
   };
 
   const handleSaveEdit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    fetcher.submit(formData, { method: "post" });
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    onEdit(rootId, id, title, description);
     setIsEditing(false);
   };
 
   const handleAddSubtask = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    fetcher.submit(formData, { method: "post" });
+    const title = formData.get("title") as string;
+    onAddSubtask(rootId, id, title);
     setIsAddingSubtask(false);
     setIsExpanded(true);
   };
@@ -93,9 +83,6 @@ export function TodoCard({ card, rootId, depth, isRoot = false }: TodoCardProps)
           <div className="content-section">
             {isEditing ? (
               <form onSubmit={handleSaveEdit} className="edit-form">
-                <input type="hidden" name="intent" value="edit" />
-                <input type="hidden" name="rootId" value={rootId} />
-                <input type="hidden" name="targetId" value={id} />
                 <input 
                   type="text" 
                   name="title" 
@@ -146,9 +133,6 @@ export function TodoCard({ card, rootId, depth, isRoot = false }: TodoCardProps)
         {isAddingSubtask && (
           <div className="add-subtask-form-wrapper">
             <form onSubmit={handleAddSubtask} className="add-subtask-form">
-              <input type="hidden" name="intent" value="add-subtask" />
-              <input type="hidden" name="rootId" value={rootId} />
-              <input type="hidden" name="parentId" value={id} />
               <input type="text" name="title" placeholder="New subtask title" required className="subtask-input" autoFocus />
               <div className="form-actions">
                 <button type="submit" className="btn-small">Add</button>
@@ -167,6 +151,10 @@ export function TodoCard({ card, rootId, depth, isRoot = false }: TodoCardProps)
               card={subtask} 
               rootId={rootId} 
               depth={depth + 1} 
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              onAddSubtask={onAddSubtask}
             />
           ))}
         </div>

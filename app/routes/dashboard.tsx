@@ -1,95 +1,130 @@
-import { useLoaderData, Form, useNavigation, useActionData } from "react-router";
-import { requireUser } from "~/services/session.server";
-import { createSessionClient } from "~/services/appwrite.server";
-import { getCards, createCard, updateCard, deleteCard } from "~/services/cards.server";
+import { useNavigate } from "react-router";
+import { account } from "~/services/appwrite";
+import { getCards, createCard, updateCard, deleteCard } from "~/services/api";
 import { Header } from "~/components/Header";
 import { SearchBar } from "~/components/SearchBar";
 import { TodoList } from "~/components/TodoList";
 import { updateTree, addSubtaskToTree } from "~/utils/recursive";
 import type { Route } from "./+types/dashboard";
-import { ID } from "node-appwrite";
+import { ID } from "appwrite";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import type { TodoCard } from "~/types/card";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Dashboard - Recursive To-Do" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const token = await requireUser(request);
-  const { account } = await createSessionClient(request);
-  const user = await account.get();
-  
-  const url = new URL(request.url);
-  const search = url.searchParams.get("q") || undefined;
-  const showCompleted = url.searchParams.get("showCompleted") !== "false";
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [cards, setCards] = useState<TodoCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const cards = await getCards(request, user.$id, search, showCompleted);
-  return { user, cards };
-}
+  // Load User and Cards
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const currentUser = await account.get();
+        setUser(currentUser);
+        const userCards = await getCards(currentUser.$id);
+        setCards(userCards);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        navigate("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [navigate]);
 
-export async function action({ request }: Route.ActionArgs) {
-  const token = await requireUser(request);
-  const formData = await request.formData();
-  const intent = formData.get("intent");
-  const { account, databases } = await createSessionClient(request);
-  const user = await account.get();
+  const handleCreateCard = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
 
-  try {
-    if (intent === "create-card") {
-      const title = formData.get("title") as string;
-      const description = formData.get("description") as string;
-      await createCard(request, { title, description, userId: user.$id });
-      return { success: true, message: "Card created" };
+    try {
+      await createCard({ title, description, userId: user.$id });
+      toast.success("Card created");
+      setIsCreating(false);
+      // Refresh cards
+      const updatedCards = await getCards(user.$id);
+      setCards(updatedCards);
+    } catch (error: any) {
+      toast.error(error.message);
     }
+  };
 
-    const rootId = formData.get("rootId") as string;
-    const targetId = formData.get("targetId") as string;
+// ...existing code...
+  const handleToggle = async (rootId: string, targetId: string, isCompleted: boolean) => {
+    try {
+      const rootCard = cards.find(c => c.$id === rootId);
+      if (!rootCard) return;
 
-    // Fetch the root card first
-    const rootCard = await databases.getDocument("todo-db", "cards", rootId);
-    let subtasks = rootCard.subtasks ? JSON.parse(rootCard.subtasks) : [];
-
-    if (intent === "toggle") {
-      const isCompleted = formData.get("isCompleted") === "true";
+      let newSubtasks = rootCard.subtasks || [];
       
       if (rootId === targetId) {
-        await updateCard(request, rootId, { isCompleted });
+        await updateCard(rootId, { isCompleted });
+        // Optimistic update
+        setCards(cards.map(c => c.$id === rootId ? { ...c, isCompleted } : c));
       } else {
-        const newSubtasks = updateTree(subtasks, targetId, (task) => ({ ...task, isCompleted }));
-        await updateCard(request, rootId, { subtasks: newSubtasks });
+        newSubtasks = updateTree(newSubtasks, targetId, (task) => ({ ...task, isCompleted }));
+        await updateCard(rootId, { subtasks: newSubtasks });
+        // Optimistic update
+        setCards(cards.map(c => c.$id === rootId ? { ...c, subtasks: newSubtasks } : c));
       }
-      return { success: true };
+    } catch (error: any) {
+      toast.error("Failed to update task");
     }
+  };
 
-    if (intent === "delete") {
-      if (rootId === targetId) {
-        await deleteCard(request, rootId);
-      } else {
-        const newSubtasks = updateTree(subtasks, targetId, () => null);
-        await updateCard(request, rootId, { subtasks: newSubtasks });
-      }
-      return { success: true, message: "Task deleted" };
-    }
-
-    if (intent === "edit") {
-      const title = formData.get("title") as string;
-      const description = formData.get("description") as string;
+  const handleDelete = async (rootId: string, targetId: string) => {
+    try {
+      const rootCard = cards.find(c => c.$id === rootId);
+      if (!rootCard) return;
 
       if (rootId === targetId) {
-        await updateCard(request, rootId, { title, description });
+        await deleteCard(rootId);
+        setCards(cards.filter(c => c.$id !== rootId));
       } else {
-        const newSubtasks = updateTree(subtasks, targetId, (task) => ({ ...task, title, description }));
-        await updateCard(request, rootId, { subtasks: newSubtasks });
+        const newSubtasks = updateTree(rootCard.subtasks || [], targetId, () => null);
+        await updateCard(rootId, { subtasks: newSubtasks });
+        setCards(cards.map(c => c.$id === rootId ? { ...c, subtasks: newSubtasks } : c));
       }
-      return { success: true, message: "Task updated" };
+      toast.success("Task deleted");
+    } catch (error: any) {
+      toast.error("Failed to delete task");
     }
+  };
 
-    if (intent === "add-subtask") {
-      const parentId = formData.get("parentId") as string;
-      const title = formData.get("title") as string;
-      
+  const handleEdit = async (rootId: string, targetId: string, title: string, description: string) => {
+    try {
+      const rootCard = cards.find(c => c.$id === rootId);
+      if (!rootCard) return;
+
+      if (rootId === targetId) {
+        await updateCard(rootId, { title, description });
+        setCards(cards.map(c => c.$id === rootId ? { ...c, title, description } : c));
+      } else {
+        const newSubtasks = updateTree(rootCard.subtasks || [], targetId, (task) => ({ ...task, title, description }));
+        await updateCard(rootId, { subtasks: newSubtasks });
+        setCards(cards.map(c => c.$id === rootId ? { ...c, subtasks: newSubtasks } : c));
+      }
+      toast.success("Task updated");
+    } catch (error: any) {
+      toast.error("Failed to update task");
+    }
+  };
+
+  const handleAddSubtask = async (rootId: string, parentId: string, title: string) => {
+    try {
+      const rootCard = cards.find(c => c.$id === rootId);
+      if (!rootCard) return;
+
       const newSubtask = {
         id: ID.unique(),
         title,
@@ -98,38 +133,23 @@ export async function action({ request }: Route.ActionArgs) {
         createdAt: new Date().toISOString()
       };
 
+      let newSubtasks = rootCard.subtasks || [];
+
       if (rootId === parentId) {
-        subtasks.push(newSubtask);
-        await updateCard(request, rootId, { subtasks });
+        newSubtasks = [...newSubtasks, newSubtask];
       } else {
-        const newSubtasks = addSubtaskToTree(subtasks, parentId, newSubtask);
-        await updateCard(request, rootId, { subtasks: newSubtasks });
+        newSubtasks = addSubtaskToTree(newSubtasks, parentId, newSubtask);
       }
-      return { success: true, message: "Subtask added" };
+
+      await updateCard(rootId, { subtasks: newSubtasks });
+      setCards(cards.map(c => c.$id === rootId ? { ...c, subtasks: newSubtasks } : c));
+      toast.success("Subtask added");
+    } catch (error: any) {
+      toast.error("Failed to add subtask");
     }
-  } catch (error: any) {
-    console.error("Action Error:", error);
-    return { success: false, message: error.message || "Something went wrong" };
-  }
+  };
 
-  return null;
-}
-
-export default function Dashboard() {
-  const { user, cards } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
-  const [isCreating, setIsCreating] = useState(false);
-
-  useEffect(() => {
-    if (actionData?.message) {
-      if (actionData.success) {
-        toast.success(actionData.message);
-        if (actionData.message === "Card created") setIsCreating(false);
-      } else {
-        toast.error(actionData.message);
-      }
-    }
-  }, [actionData]);
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
 
   return (
     <div className="dashboard-container">
@@ -147,8 +167,7 @@ export default function Dashboard() {
           <div className="create-card-modal">
             <div className="modal-content">
               <h2>Create New Task</h2>
-              <Form method="post">
-                <input type="hidden" name="intent" value="create-card" />
+              <form onSubmit={handleCreateCard}>
                 <div className="form-group">
                   <label>Title</label>
                   <input type="text" name="title" required autoFocus />
@@ -161,12 +180,18 @@ export default function Dashboard() {
                   <button type="submit" className="btn-primary">Create</button>
                   <button type="button" onClick={() => setIsCreating(false)} className="btn-secondary">Cancel</button>
                 </div>
-              </Form>
+              </form>
             </div>
           </div>
         )}
 
-        <TodoList cards={cards} />
+        <TodoList 
+          cards={cards} 
+          onToggle={handleToggle}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onAddSubtask={handleAddSubtask}
+        />
       </main>
     </div>
   );
