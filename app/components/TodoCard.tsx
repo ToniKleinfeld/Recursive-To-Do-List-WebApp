@@ -9,13 +9,14 @@ interface TodoCardProps {
   rootId: string;
   depth: number;
   isRoot?: boolean;
+  showCompleted?: boolean;
   onToggle: (rootId: string, targetId: string, isCompleted: boolean) => void;
   onDelete: (rootId: string, targetId: string) => void;
   onEdit: (rootId: string, targetId: string, title: string, description: string) => void;
   onAddSubtask: (rootId: string, parentId: string, title: string) => void;
 }
 
-export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDelete, onEdit, onAddSubtask }: TodoCardProps) {
+export function TodoCard({ card, rootId, depth, isRoot = false, showCompleted = true, onToggle, onDelete, onEdit, onAddSubtask }: TodoCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
@@ -24,6 +25,9 @@ export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDele
   const id = isRoot ? (card as TodoCardType).$id : (card as Subtask).id;
   const isCompleted = card.isCompleted;
   const subtasks = card.subtasks || [];
+  
+  // Filter subtasks for display
+  const displayedSubtasks = subtasks.filter(s => showCompleted || !s.isCompleted);
   
   const completedCount = subtasks.filter(s => s.isCompleted).length;
   const totalCount = subtasks.length;
@@ -152,14 +156,15 @@ export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDele
         )}
       </div>
 
-      {isExpanded && subtasks.length > 0 && (
+      {isExpanded && displayedSubtasks.length > 0 && (
         <div className="subtasks-list">
-          {subtasks.map((subtask) => (
+          {displayedSubtasks.map((subtask) => (
             <TodoCard 
               key={subtask.id} 
               card={subtask} 
               rootId={rootId} 
               depth={depth + 1} 
+              showCompleted={showCompleted}
               onToggle={onToggle}
               onDelete={onDelete}
               onEdit={onEdit}

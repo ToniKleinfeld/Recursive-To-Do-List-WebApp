@@ -81,8 +81,13 @@ export default function Login() {
 
     } catch (error: any) {
       console.error("Login Error:", error);
-      setErrors({ form: "Invalid email or password." });
-      toast.error("Invalid email or password.");
+      if (error?.code === 429 || error?.type === 'general_rate_limit_exceeded') {
+        setErrors({ form: "Too many login attempts. Please wait 15 minutes." });
+        toast.error("Too many login attempts. Please wait 15 minutes.");
+      } else {
+        setErrors({ form: "Invalid email or password." });
+        toast.error("Invalid email or password.");
+      }
     } finally {
       setIsSubmitting(false);
     }

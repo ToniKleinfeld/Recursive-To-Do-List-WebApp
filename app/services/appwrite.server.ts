@@ -9,7 +9,6 @@ export const PROJECT_ID = process.env.VITE_APPWRITE_PROJECT_ID!;
 const API_KEY = process.env.ADMIN_KEY!;
 
 export function createAdminClient() {
-  console.log("[Appwrite] Creating Admin Client");
   if (!API_KEY) {
     console.error("❌ API_KEY is missing! Check your .env file.");
   }

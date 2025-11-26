@@ -16,10 +16,18 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  // 1. Authentication Check
+  let user;
   try {
     const { account } = await createSessionClient(request);
-    const user = await account.get();
+    user = await account.get();
+  } catch (error) {
+    // Only redirect if authentication fails
+    return redirect("/login");
+  }
 
+  // 2. Data Fetching
+  try {
     const url = new URL(request.url);
     const q = url.searchParams.get("q");
     const showCompleted = url.searchParams.get("showCompleted") !== "false";
@@ -35,7 +43,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     ];
 
     if (q) {
-      queries.push(Query.search("title", q));
+      queries.push(
+        Query.or([
+          Query.contains("title", q),
+          Query.contains("description", q)
+        ])
+      );
     }
 
     if (!showCompleted) {
@@ -60,8 +73,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
     return { user, cards };
   } catch (error: any) {
-    console.error("[Dashboard] Loader Error:", error);
-    return redirect("/login");
+    console.error("[Dashboard] Data Fetch Error:", error);
+    // Return user but empty cards if data fetch fails (e.g. missing index)
+    // This prevents logging the user out just because search failed
+    return { user, cards: [], error: error.message };
   }
 }
 
@@ -125,7 +140,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Dashboard() {
-  const { user, cards: initialCards } = useLoaderData<typeof loader>();
+  const { user, cards: initialCards, error } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const [cards, setCards] = useState<TodoCard[]>(initialCards);
   const [isCreating, setIsCreating] = useState(false);
@@ -133,6 +148,13 @@ export default function Dashboard() {
 
   const showCompleted = searchParams.get("showCompleted") !== "false";
   const searchQuery = searchParams.get("q") || "";
+
+  // Show error toast if loader failed (e.g. missing index)
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load tasks: " + error);
+    }
+  }, [error]);
 
   // Sync cards when loader data changes (e.g. after action revalidation)
   useEffect(() => {
@@ -308,6 +330,7 @@ export default function Dashboard() {
 
         <TodoList 
           cards={displayedCards} 
+          showCompleted={showCompleted}
           onToggle={handleToggle}
           onDelete={handleDelete}
           onEdit={handleEdit}
