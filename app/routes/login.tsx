@@ -4,11 +4,26 @@ import { validateEmail, validatePassword } from "~/utils/validation";
 import type { Route } from "./+types/login";
 import { toast } from "sonner";
 import { useState } from "react";
+import { createUserSession } from "~/services/session.server";
+import { ThemeToggle } from "~/components/ThemeToggle";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Login - Recursive To-Do" }];
 }
 
+// We need an action to set the cookie on the server after client-side login
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const secret = formData.get("secret") as string;
+  
+  if (!secret) {
+    return { error: "No secret provided" };
+  }
+
+  return createUserSession(secret, "/dashboard");
+}
+
+// ...existing code...
 export default function Login() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,9 +50,35 @@ export default function Login() {
     }
 
     try {
+      // Ensure no active session exists before creating a new one
+      try {
+        await account.deleteSession("current");
+      } catch (e) {
+        // Ignore if no session exists
+      }
+
+      // 1. Client: Login
       await account.createEmailPasswordSession(email, password);
-      toast.success("Logged in successfully");
-      navigate("/dashboard");
+      
+      // 2. Client: Create JWT
+      const jwt = await account.createJWT();
+      
+      // 3. Client: Send JWT to Remix Server via Action
+      const form = new FormData();
+      form.append("secret", jwt.jwt); // We use the JWT as the "token" for our session
+      
+      const response = await fetch("/login", {
+        method: "POST",
+        body: form
+      });
+      
+      if (response.ok) {
+        toast.success("Logged in successfully");
+        navigate("/dashboard");
+      } else {
+        throw new Error("Failed to sync session");
+      }
+
     } catch (error: any) {
       console.error("Login Error:", error);
       setErrors({ form: "Invalid email or password." });
@@ -49,6 +90,9 @@ export default function Login() {
 
   return (
     <div className="auth-container">
+      <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+        <ThemeToggle />
+      </div>
       <div className="auth-card">
         <h1 className="auth-title">Welcome Back</h1>
         <p className="auth-subtitle">Log in to continue organizing.</p>
