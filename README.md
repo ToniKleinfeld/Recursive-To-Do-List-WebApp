@@ -1,75 +1,48 @@
 # Recursive To-Do List WebApp
 
-A modern, recursive To-Do list application built with Remix (React Router v7), Appwrite, and Docker.
+A modern, recursive To-Do list application built with React Router v7 (Remix), Appwrite, and Docker.
 
 ## Features
 
-- **Recursive Tasks**: Create tasks with up to 10 levels of subtasks.
+- **Recursive Tasks**: Create tasks with infinite levels of subtasks.
 - **Authentication**: Secure Signup/Login with Appwrite and HTTP-only cookies.
 - **Search & Filter**: Real-time search across all nested tasks and "Hide Completed" toggle.
 - **Dark Mode**: Toggle between Day and Night themes.
-- **Welcome Email**: Automated welcome email upon registration (via Appwrite Functions).
-- **Docker Deployment**: Production-ready setup with Traefik Reverse Proxy and SSL.
+- **Docker Deployment**: Production-ready setup with Nginx Proxy and automatic SSL (Let's Encrypt).
 
 ## Tech Stack
 
-- **Frontend**: Remix (React Router v7), TypeScript, SCSS.
-- **Backend**: Appwrite Cloud (Database, Auth, Functions).
-- **Deployment**: Docker Compose, Traefik.
+- **Frontend**: React Router v7, TypeScript, SCSS.
+- **Backend**: Appwrite Cloud (Database, Auth).
+- **Deployment**: Docker Compose, Nginx Proxy.
 
-## Setup Instructions
+## Local Development
 
 ### 1. Prerequisites
 
-- Node.js (v18+)
-- Docker & Docker Compose
+- Node.js (v20+)
 - Appwrite Cloud Account
 
 ### 2. Installation
 
-1.  Clone the repository.
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Install Appwrite CLI:
-    ```bash
-    npm install -g appwrite-cli
-    ```
-
-### 3. Appwrite Setup
-
-1.  Login to Appwrite CLI:
-    ```bash
-    appwrite login
-    ```
-2.  Initialize the project (if not already linked):
-    ```bash
-    appwrite init project
-    ```
-3.  Run the setup script to create Database and Collections:
-    ```bash
-    node scripts/setup-appwrite.js
-    ```
-    *Note: Ensure `.env` contains your `DEV_KEY` (API Key).*
-
-4.  Deploy the Welcome Email Function:
-    ```bash
-    appwrite push functions
-    ```
-
-### 4. Environment Variables
-
-Create a `.env` file based on `.env.example`:
-
-```dotenv
-VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
-VITE_APPWRITE_PROJECT_ID=your_project_id
-DEV_KEY=your_api_key_with_admin_access
-SESSION_SECRET=super-secret-key
+```bash
+# Install dependencies
+npm install
 ```
 
-### 5. Development
+### 3. Environment Setup
+
+1.  Copy the example environment file:
+    ```bash
+    cp .env.example .env
+    ```
+2.  Fill in your Appwrite credentials in `.env`:
+    *   `VITE_APPWRITE_ENDPOINT`: Your Appwrite Endpoint (e.g., `https://cloud.appwrite.io/v1`)
+    *   `VITE_APPWRITE_PROJECT_ID`: Your Project ID
+    *   `ADMIN_KEY`: An API Key from Appwrite Console with scopes: `users.read`, `users.write`, `databases.read`, `databases.write`.
+    *   `SESSION_SECRET`: A random string for cookie encryption.
+
+### 4. Run Locally
 
 Start the development server:
 
@@ -79,25 +52,30 @@ npm run dev
 
 Visit `http://localhost:5173`.
 
-### 6. Production Deployment (Docker)
+## Production Deployment (Docker)
 
-1.  Ensure `acme.json` exists and has correct permissions (chmod 600 on Linux/Mac).
-2.  Update `traefik.yml` with your email for Let's Encrypt.
-3.  Update `docker-compose.yml` with your domain name in Traefik labels.
-4.  Run:
-    ```bash
-    docker-compose up -d --build
-    ```
+This project uses `nginx-proxy` and `acme-companion` for automatic SSL certificates.
 
-## Project Structure
+### 1. Build Image (Locally)
 
-- `app/routes`: Application routes (signup, login, dashboard).
-- `app/components`: UI Components (TodoCard, SearchBar, etc.).
-- `app/services`: Backend services (Appwrite, Session, Cards).
-- `app/utils`: Helper functions (Recursive logic, Validation).
-- `appwrite/functions`: Appwrite Cloud Functions.
-- `scripts`: Setup scripts.
+Since environment variables need to be baked into the frontend build, build the image locally:
 
-## License
+```bash
+# Replace values with your actual credentials
+docker build --platform linux/amd64 \
+  --build-arg VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1 \
+  --build-arg VITE_APPWRITE_PROJECT_ID=your_project_id \
+  -t your-dockerhub-user/recursive-todo:latest .
 
-MIT
+docker push your-dockerhub-user/recursive-todo:latest
+```
+
+### 2. Deploy (On Server)
+
+1.  Copy `docker-compose.prod.yml` to your server.
+2.  Create a `.env` file on the server with `DOMAIN` and `EMAIL_ADMIN`.
+3.  Run:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
