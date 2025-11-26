@@ -1,4 +1,4 @@
-import { Search, X } from "lucide-react";
+import { Search, X, Eye, EyeOff } from "lucide-react";
 import { useSearchParams, useSubmit } from "react-router";
 import { useEffect, useState, useRef } from "react";
 
@@ -42,6 +42,8 @@ export function SearchBar() {
     submit({ q: query, showCompleted: newShowCompleted ? "true" : "false" }, { method: "get", replace: true });
   };
 
+  const isHidingCompleted = !showCompleted;
+
   return (
     <div className="search-bar-container">
       <div className="search-input-wrapper">
@@ -59,14 +61,14 @@ export function SearchBar() {
           </button>
         )}
       </div>
-      <label className="filter-toggle">
-        <input 
-          type="checkbox" 
-          checked={!showCompleted} 
-          onChange={toggleCompleted} 
-        />
+      <button 
+        onClick={toggleCompleted}
+        className={`filter-toggle-btn ${isHidingCompleted ? 'active' : ''}`}
+        type="button"
+      >
+        {isHidingCompleted ? <EyeOff size={18} /> : <Eye size={18} />}
         <span>Hide Completed</span>
-      </label>
+      </button>
     </div>
   );
 }

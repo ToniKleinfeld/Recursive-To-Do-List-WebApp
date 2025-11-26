@@ -1,21 +1,19 @@
-import { Link } from "react-router";
-import { Moon, Sun, LogOut, CheckSquare } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getTheme, setTheme } from "~/utils/theme";
+import { useSubmit } from "react-router";
+import { LogOut, CheckSquare } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
+import { account } from "~/services/appwrite";
 
 export function Header({ user }: { user: any }) {
-  const [theme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+  const submit = useSubmit();
 
-  useEffect(() => {
-    const savedTheme = getTheme();
-    setCurrentTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setCurrentTheme(newTheme);
-    setTheme(newTheme);
+  const handleLogout = async () => {
+    try {
+      await account.deleteSession("current");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+    // Proceed to server logout regardless of client success
+    submit(null, { method: "post", action: "/logout" });
   };
 
   return (
@@ -26,12 +24,10 @@ export function Header({ user }: { user: any }) {
       </div>
       <div className="actions">
         <span className="user-name">{user?.name}</span>
-        <button onClick={toggleTheme} className="icon-btn" aria-label="Toggle Theme">
-          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-        </button>
-        <Link to="/logout" className="icon-btn" aria-label="Logout">
+        <ThemeToggle />
+        <button onClick={handleLogout} className="icon-btn" aria-label="Logout">
           <LogOut size={20} />
-        </Link>
+        </button>
       </div>
     </header>
   );

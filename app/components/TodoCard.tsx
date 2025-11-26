@@ -19,6 +19,7 @@ export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDele
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const id = isRoot ? (card as TodoCardType).$id : (card as Subtask).id;
   const isCompleted = card.isCompleted;
@@ -32,10 +33,13 @@ export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDele
     onToggle(rootId, id, !isCompleted);
   };
 
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this task?")) {
-      onDelete(rootId, id);
-    }
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    onDelete(rootId, id);
+    setShowDeleteModal(false);
   };
 
   const handleSaveEdit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -114,15 +118,20 @@ export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDele
           <div className="actions-section">
             {!isEditing && (
               <>
+                {depth < MAX_SUBTASK_DEPTH && (
+                  <button 
+                    onClick={() => setIsAddingSubtask(true)} 
+                    className="action-btn add-subtask-btn" 
+                    aria-label="Add Subtask"
+                  >
+                    <Plus size={16} />
+                    <span>Add Subtask</span>
+                  </button>
+                )}
                 <button onClick={() => setIsEditing(true)} className="action-btn" aria-label="Edit">
                   <Edit2 size={16} />
                 </button>
-                {depth < MAX_SUBTASK_DEPTH && (
-                  <button onClick={() => setIsAddingSubtask(true)} className="action-btn" aria-label="Add Subtask">
-                    <Plus size={16} />
-                  </button>
-                )}
-                <button onClick={handleDelete} className="action-btn delete" aria-label="Delete">
+                <button onClick={handleDeleteClick} className="action-btn delete" aria-label="Delete">
                   <Trash2 size={16} />
                 </button>
               </>
@@ -157,6 +166,19 @@ export function TodoCard({ card, rootId, depth, isRoot = false, onToggle, onDele
               onAddSubtask={onAddSubtask}
             />
           ))}
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <h3>Delete Task?</h3>
+            <p>Are you sure you want to delete "{card.title}"?</p>
+            <div className="modal-actions">
+              <button onClick={confirmDelete} className="btn-danger">Delete</button>
+              <button onClick={() => setShowDeleteModal(false)} className="btn-secondary">Back</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

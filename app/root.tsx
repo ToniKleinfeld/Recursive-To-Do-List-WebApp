@@ -7,6 +7,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { Toaster } from "sonner";
+import { useEffect } from "react";
+import { getTheme } from "~/utils/theme";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -26,6 +28,11 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const savedTheme = getTheme();
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
   return (
     <html lang="en">
       <head>
