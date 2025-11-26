@@ -1,0 +1,57 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.btn-primary {
+  background-color: var(--primary-dark);
+  color: white;
+  padding: $spacing-unit * 3 $spacing-unit * 6;
+  border-radius: $border-radius;
+  font-weight: 600;
+  transition: opacity $transition-speed $transition-ease;
+  width: 100%;
+  
+  &:hover {
+    opacity: 0.9;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.form-group {
+  margin-bottom: $spacing-unit * 4;
+  
+  label {
+    display: block;
+    margin-bottom: $spacing-unit * 2;
+    font-weight: 500;
+  }
+  
+  input {
+    width: 100%;
+    padding: $spacing-unit * 3;
+    border: 1px solid #ddd;
+    border-radius: $border-radius;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    
+    &:focus {
+      outline: none;
+      border-color: var(--primary-dark);
+      box-shadow: 0 0 0 2px rgba($primary-dark, 0.1);
+    }
+    
+    &.error {
+      border-color: $danger;
+    }
+  }
+  
+  .error-message {
+    color: $danger;
+    font-size: 0.875rem;
+    margin-top: $spacing-unit;
+    display: block;
+  }
+}

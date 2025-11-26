@@ -1,0 +1,184 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit * 3;
+}
+
+.todo-card-wrapper {
+  &.root-card {
+    margin-bottom: $spacing-unit * 2;
+  }
+}
+
+.todo-card {
+  @include card-base;
+  padding: $spacing-unit * 3;
+  border: 1px solid transparent;
+  
+  &.completed {
+    opacity: 0.7;
+    .card-title {
+      text-decoration: line-through;
+      color: #888;
+    }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-unit * 3;
+  }
+
+  .left-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-unit * 2;
+    padding-top: $spacing-unit;
+  }
+
+  .checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--primary-dark);
+    border-radius: 4px;
+    @include flex-center;
+    color: white;
+    transition: background-color 0.2s;
+
+    &.checked {
+      background-color: var(--primary-dark);
+    }
+  }
+
+  .expand-btn {
+    color: #999;
+    &:hover { color: var(--text-color); }
+  }
+
+  .content-section {
+    flex: 1;
+    min-width: 0; // For text truncation
+  }
+
+  .card-title {
+    margin: 0 0 $spacing-unit 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .card-description {
+    margin: 0 0 $spacing-unit * 2 0;
+    font-size: 0.875rem;
+    color: #666;
+    [data-theme='dark'] & { color: #aaa; }
+  }
+
+  .progress-badge {
+    font-size: 0.75rem;
+    background-color: rgba(0,0,0,0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #666;
+    [data-theme='dark'] & { color: #aaa; background-color: rgba(255,255,255,0.1); }
+  }
+
+  .actions-section {
+    display: flex;
+    gap: $spacing-unit;
+    opacity: 0;
+    transition: opacity 0.2s;
+
+    @include mobile {
+      opacity: 1; // Always show on mobile
+    }
+  }
+
+  &:hover .actions-section {
+    opacity: 1;
+  }
+
+  .action-btn {
+    padding: $spacing-unit;
+    color: #999;
+    border-radius: 4px;
+    &:hover {
+      background-color: rgba(0,0,0,0.05);
+      color: var(--text-color);
+    }
+    &.delete:hover {
+      color: $danger;
+      background-color: rgba($danger, 0.1);
+    }
+  }
+}
+
+.subtasks-list {
+  margin-top: $spacing-unit * 2;
+  border-left: 2px solid rgba(0,0,0,0.05);
+  [data-theme='dark'] & { border-left-color: rgba(255,255,255,0.05); }
+}
+
+.add-subtask-form-wrapper {
+  margin-top: $spacing-unit * 2;
+  padding-left: $spacing-unit * 8;
+}
+
+.add-subtask-form {
+  display: flex;
+  gap: $spacing-unit * 2;
+  align-items: center;
+
+  .subtask-input {
+    flex: 1;
+    padding: $spacing-unit * 1.5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+  }
+
+  .btn-small {
+    padding: $spacing-unit $spacing-unit * 2;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    background-color: var(--primary-dark);
+    color: white;
+    
+    &.cancel {
+      background-color: transparent;
+      color: #666;
+      border: 1px solid #ddd;
+    }
+  }
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit * 2;
+
+  .edit-input, .edit-textarea {
+    width: 100%;
+    padding: $spacing-unit * 1.5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: $spacing-unit * 2;
+    
+    button {
+      padding: $spacing-unit;
+      border-radius: 4px;
+      &.save-btn { background-color: $success; color: white; }
+      &.cancel-btn { background-color: #ddd; color: #333; }
+    }
+  }
+}

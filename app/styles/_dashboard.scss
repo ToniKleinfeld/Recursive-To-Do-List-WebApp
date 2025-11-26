@@ -1,0 +1,180 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.dashboard-container {
+  min-height: 100vh;
+  background-color: var(--bg-color);
+}
+
+.app-header {
+  @include flex-between;
+  padding: $spacing-unit * 4 $spacing-unit * 6;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .logo {
+    @include flex-center;
+    gap: $spacing-unit * 2;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary-dark);
+  }
+
+  .actions {
+    @include flex-center;
+    gap: $spacing-unit * 4;
+
+    .user-name {
+      font-weight: 500;
+      display: none;
+      @include desktop {
+        display: block;
+      }
+    }
+
+    .icon-btn {
+      padding: $spacing-unit * 2;
+      border-radius: 50%;
+      color: var(--text-color);
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+    }
+  }
+}
+
+.main-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: $spacing-unit * 6;
+}
+
+.controls-section {
+  @include flex-between;
+  flex-direction: column;
+  gap: $spacing-unit * 4;
+  margin-bottom: $spacing-unit * 6;
+
+  @include desktop {
+    flex-direction: row;
+  }
+
+  .create-btn {
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 2;
+  }
+}
+
+.search-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit * 2;
+  width: 100%;
+
+  @include desktop {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    flex: 1;
+    max-width: 500px;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    flex: 1;
+
+    .search-icon {
+      position: absolute;
+      left: $spacing-unit * 3;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: $spacing-unit * 2.5 $spacing-unit * 3 $spacing-unit * 2.5 $spacing-unit * 9;
+      border: 1px solid #ddd;
+      border-radius: $border-radius;
+      background-color: var(--card-bg);
+      color: var(--text-color);
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-dark);
+      }
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: $spacing-unit * 2;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      &:hover { color: #666; }
+    }
+  }
+
+  .filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 2;
+    cursor: pointer;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+}
+
+.create-card-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  @include flex-center;
+  z-index: 200;
+  padding: $spacing-unit * 4;
+
+  .modal-content {
+    @include card-base;
+    width: 100%;
+    max-width: 500px;
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: $spacing-unit * 4;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: $spacing-unit * 2;
+      margin-top: $spacing-unit * 4;
+
+      .btn-secondary {
+        background-color: transparent;
+        border: 1px solid #ddd;
+        padding: $spacing-unit * 2 $spacing-unit * 4;
+        border-radius: $border-radius;
+        &:hover { background-color: rgba(0,0,0,0.05); }
+      }
+      
+      .btn-primary {
+        width: auto;
+      }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: $spacing-unit * 10;
+  color: #999;
+  font-size: 1.1rem;
+}
