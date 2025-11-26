@@ -11,11 +11,14 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  console.log("Signup action started"); // Debug log
   const formData = await request.formData();
   const email = formData.get("email");
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
   const name = formData.get("name");
+
+  console.log("Signup attempt for:", email); // Debug log
 
   const errors = {
     email: validateEmail(email),
@@ -26,10 +29,13 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   if (errors.email || errors.password || errors.confirmPassword || errors.name) {
+    console.log("Validation errors:", errors); // Debug log
     return { errors };
   }
 
   try {
+    console.log("Initializing Appwrite client..."); // Debug log
+    console.log("Endpoint:", process.env.VITE_APPWRITE_ENDPOINT); // Debug log
     // Use a public client (no API Key) for self-registration
     // This avoids permission issues with the Admin API Key
     const client = new Client()
@@ -39,16 +45,21 @@ export async function action({ request }: Route.ActionArgs) {
     const account = new Account(client);
     
     // 1. Create User (Public registration)
+    console.log("Creating account..."); // Debug log
     await account.create(ID.unique(), email as string, password as string, name as string);
+    console.log("Account created successfully"); // Debug log
 
     // 2. Create Session (Login)
+    console.log("Creating session..."); // Debug log
     const session = await account.createEmailPasswordSession(email as string, password as string);
+    console.log("Session created"); // Debug log
 
     // 3. Store Session
+    console.log("Storing session and redirecting..."); // Debug log
     return createUserSession(session.secret, "/dashboard");
 
   } catch (error: any) {
-    console.error("Signup Error:", error);
+    console.error("Signup Error Full Object:", error); // Debug log
     return { errors: { ...errors, form: error.message || "Something went wrong during signup." } };
   }
 }
