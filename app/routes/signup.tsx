@@ -1,5 +1,5 @@
 import { Form, useActionData, useNavigation, Link } from "react-router";
-import { ID } from "node-appwrite";
+import { ID, Client, Account } from "node-appwrite";
 import { createUserSession } from "~/services/session.server";
 import { createAdminClient } from "~/services/appwrite.server";
 import { validateEmail, validateName, validatePassword, validatePasswordMatch } from "~/utils/validation";
@@ -48,7 +48,24 @@ export async function action({ request }: Route.ActionArgs) {
     // We use users.createSession from Admin API to generate a session for the new user
     const session = await users.createSession(userId);
 
-    // 3. Store Session
+    // 3. Trigger Verification Email (Client Side Logic on Server)
+    try {
+      const client = new Client()
+        .setEndpoint(process.env.VITE_APPWRITE_ENDPOINT!)
+        .setProject(process.env.VITE_APPWRITE_PROJECT_ID!)
+        .setSession(session.secret);
+
+      const account = new Account(client);
+      const origin = new URL(request.url).origin;
+      
+      // Sends email to the user
+      await account.createVerification(`${origin}/dashboard`);
+    } catch (emailError) {
+      console.error("[Signup] Failed to send verification email:", emailError);
+      // We continue anyway, as the user is created and logged in
+    }
+
+    // 4. Store Session
     return createUserSession(session.secret, "/dashboard");
 
   } catch (error: any) {
