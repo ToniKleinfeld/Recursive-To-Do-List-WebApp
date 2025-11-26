@@ -38,5 +38,19 @@
                 "mockNumbers": []
             }
         }
-    }
+    },
+    "functions": [
+        {
+            "$id": "welcome-email",
+            "name": "Welcome Email",
+            "runtime": "node-18.0",
+            "path": "appwrite/functions/welcome-email",
+            "entrypoint": "src/main.js",
+            "ignore": ["node_modules", ".gitignore"],
+            "execute": [],
+            "events": ["users.*.create"],
+            "schedule": "",
+            "timeout": 15
+        }
+    ]
 }

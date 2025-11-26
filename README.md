@@ -1,87 +1,103 @@
-# Welcome to React Router!
+# Recursive To-Do List WebApp
 
-A modern, production-ready template for building full-stack React applications using React Router.
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+A modern, recursive To-Do list application built with Remix (React Router v7), Appwrite, and Docker.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- **Recursive Tasks**: Create tasks with up to 10 levels of subtasks.
+- **Authentication**: Secure Signup/Login with Appwrite and HTTP-only cookies.
+- **Search & Filter**: Real-time search across all nested tasks and "Hide Completed" toggle.
+- **Dark Mode**: Toggle between Day and Night themes.
+- **Welcome Email**: Automated welcome email upon registration (via Appwrite Functions).
+- **Docker Deployment**: Production-ready setup with Traefik Reverse Proxy and SSL.
 
-## Getting Started
+## Tech Stack
 
-### Installation
+- **Frontend**: Remix (React Router v7), TypeScript, SCSS.
+- **Backend**: Appwrite Cloud (Database, Auth, Functions).
+- **Deployment**: Docker Compose, Traefik.
 
-Install the dependencies:
+## Setup Instructions
 
-```bash
-npm install
+### 1. Prerequisites
+
+- Node.js (v18+)
+- Docker & Docker Compose
+- Appwrite Cloud Account
+
+### 2. Installation
+
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Install Appwrite CLI:
+    ```bash
+    npm install -g appwrite-cli
+    ```
+
+### 3. Appwrite Setup
+
+1.  Login to Appwrite CLI:
+    ```bash
+    appwrite login
+    ```
+2.  Initialize the project (if not already linked):
+    ```bash
+    appwrite init project
+    ```
+3.  Run the setup script to create Database and Collections:
+    ```bash
+    node scripts/setup-appwrite.js
+    ```
+    *Note: Ensure `.env` contains your `DEV_KEY` (API Key).*
+
+4.  Deploy the Welcome Email Function:
+    ```bash
+    appwrite push functions
+    ```
+
+### 4. Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```dotenv
+VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+VITE_APPWRITE_PROJECT_ID=your_project_id
+DEV_KEY=your_api_key_with_admin_access
+SESSION_SECRET=super-secret-key
 ```
 
-### Development
+### 5. Development
 
-Start the development server with HMR:
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+Visit `http://localhost:5173`.
 
-## Building for Production
+### 6. Production Deployment (Docker)
 
-Create a production build:
+1.  Ensure `acme.json` exists and has correct permissions (chmod 600 on Linux/Mac).
+2.  Update `traefik.yml` with your email for Let's Encrypt.
+3.  Update `docker-compose.yml` with your domain name in Traefik labels.
+4.  Run:
+    ```bash
+    docker-compose up -d --build
+    ```
 
-```bash
-npm run build
-```
+## Project Structure
 
-## Deployment
+- `app/routes`: Application routes (signup, login, dashboard).
+- `app/components`: UI Components (TodoCard, SearchBar, etc.).
+- `app/services`: Backend services (Appwrite, Session, Cards).
+- `app/utils`: Helper functions (Recursive logic, Validation).
+- `appwrite/functions`: Appwrite Cloud Functions.
+- `scripts`: Setup scripts.
 
-### Docker Deployment
+## License
 
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+MIT

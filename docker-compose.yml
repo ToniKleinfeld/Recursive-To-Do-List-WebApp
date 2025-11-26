@@ -1,0 +1,40 @@
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./acme.json:/acme.json
+    networks:
+      - web
+    restart: unless-stopped
+
+  webapp:
+    build: .
+    container_name: recursive-todo-app
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webapp.rule=Host(`localhost`)" # Change to your domain
+      - "traefik.http.routers.webapp.entrypoints=websecure"
+      - "traefik.http.routers.webapp.tls.certresolver=myresolver"
+      - "traefik.http.services.webapp.loadbalancer.server.port=3000"
+    environment:
+      - VITE_APPWRITE_ENDPOINT=${VITE_APPWRITE_ENDPOINT}
+      - VITE_APPWRITE_PROJECT_ID=${VITE_APPWRITE_PROJECT_ID}
+      - DEV_KEY=${DEV_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - NODE_ENV=production
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge

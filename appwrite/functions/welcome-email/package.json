@@ -1,0 +1,10 @@
+{
+  "name": "welcome-email",
+  "version": "1.0.0",
+  "description": "Sends a welcome email to new users",
+  "main": "src/main.js",
+  "type": "module",
+  "dependencies": {
+    "node-appwrite": "^11.0.0"
+  }
+}
